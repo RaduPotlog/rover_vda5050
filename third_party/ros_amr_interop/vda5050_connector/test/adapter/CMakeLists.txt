@@ -7,8 +7,7 @@ if (TARGET ${target})
   target_include_directories(${target} PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:common>)
-  ament_target_dependencies(${target} ${cpp_dependencies} ${msg_dependencies})
-  target_link_libraries(${target} ${library_adapter})
+  target_link_libraries(${target} ${adapter_link_targets} ${library_adapter})
 endif()
 endmacro()
 

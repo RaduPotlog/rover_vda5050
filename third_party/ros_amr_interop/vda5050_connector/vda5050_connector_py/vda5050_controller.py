@@ -714,7 +714,9 @@ class VDA5050Controller(Node):
                 "battery_state": order_state.state.battery_state,
                 "errors": current_errors + order_state.state.errors,
                 "informations": order_state.state.informations,
-                "operating_mode": order_state.state.operating_mode
+                "operating_mode": order_state.state.operating_mode,
+                # rover_vda5050: forward the adapter's e-stop / field-violation state.
+                "safety_state": order_state.state.safety_state,
             }
         )
 

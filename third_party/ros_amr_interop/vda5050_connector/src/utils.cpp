@@ -34,7 +34,7 @@
  */
 #include "vda5050_connector/utils.hpp"
 
-#include "tf2/LinearMath/Quaternion.h"
+#include "tf2/LinearMath/Quaternion.hpp"  // rover_vda5050 lyrical port: .h headers removed
 
 namespace vda5050_connector
 {

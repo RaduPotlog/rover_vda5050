@@ -247,7 +247,9 @@ class MQTTBridge(Node):
         self._interface_name = read_str_parameter(self, "interface_name", "uagv")
 
         # Configure MQTT
-        self.mqtt_client = mqtt_client.Client()
+        # rover_vda5050 lyrical port: paho-mqtt >= 2.0 requires the callback API version.
+        # VERSION1 keeps this node's (client, userdata, flags, rc) callback signatures.
+        self.mqtt_client = mqtt_client.Client(mqtt_client.CallbackAPIVersion.VERSION1)
         self.mqtt_client.on_connect = self.on_connect_mqtt
         self.mqtt_client.on_message = self.on_message_mqtt
         self.mqtt_client.on_disconnect = self.on_disconnect_mqtt

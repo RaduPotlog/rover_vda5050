@@ -54,11 +54,16 @@ target_compile_features(${library_adapter} PUBLIC cxx_std_17)  # Require C++17
 target_include_directories(${library_adapter} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-ament_target_dependencies(${library_adapter}
-  ${cpp_dependencies}
-  ${msg_dependencies}
-  tf2
+# rover_vda5050 lyrical port: ament_target_dependencies() was removed in lyrical.
+set(adapter_link_targets
+  rclcpp::rclcpp
+  rclcpp_action::rclcpp_action
+  pluginlib::pluginlib
+  tf2::tf2
+  ${vda5050_msgs_TARGETS}
+  ${geometry_msgs_TARGETS}
 )
+target_link_libraries(${library_adapter} ${adapter_link_targets})
 rosidl_get_typesupport_target(cpp_typesupport_target "${PROJECT_NAME}" "rosidl_typesupport_cpp")
 target_link_libraries(${library_adapter} "${cpp_typesupport_target}")
 
@@ -140,6 +145,13 @@ ament_export_targets(
 )
 ament_export_dependencies(
   rosidl_default_runtime
+  # rover_vda5050 lyrical port: the exported adapter target links these imported targets.
+  rclcpp
+  rclcpp_action
+  pluginlib
+  tf2
+  vda5050_msgs
+  geometry_msgs
 )
 
 ament_package()
