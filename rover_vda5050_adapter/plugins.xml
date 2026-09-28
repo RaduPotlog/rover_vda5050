@@ -13,4 +13,10 @@
   <class type="rover_vda5050_adapter::plugins::StopPause" base_class_type="adapter::VDAAction">
     <description>VDA 5050 stopPause: continue the order from the first node not yet reached.</description>
   </class>
+  <class type="rover_vda5050_adapter::plugins::EnableAuxOutput" base_class_type="adapter::VDAAction">
+    <description>enableAuxOutput: switch aux outputs 1..6 (safety PLC DIO00..05) on.</description>
+  </class>
+  <class type="rover_vda5050_adapter::plugins::DisableAuxOutput" base_class_type="adapter::VDAAction">
+    <description>disableAuxOutput: switch aux outputs 1..6 (safety PLC DIO00..05) off.</description>
+  </class>
 </library>

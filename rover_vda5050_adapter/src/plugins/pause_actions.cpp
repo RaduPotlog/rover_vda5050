@@ -12,44 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <memory>
-
 #include "pluginlib/class_list_macros.hpp"
-#include "vda5050_connector/vda_action.hpp"
 
-#include "rover_vda5050_adapter/application/ports.hpp"
-#include "rover_vda5050_adapter/infrastructure/rover_link.hpp"
+#include "rover_vda5050_adapter/plugins/instant_rover_action.hpp"
 
 namespace rover_vda5050_adapter::plugins
 {
-
-/**
- * @brief Base for the instant actions that complete in one blocking call.
- *
- * The connector's VDAAction::execute() loops over the action state until FINISHED or FAILED, on
- * a thread of its own. The goal is only ever terminated here: the connector's controller learns
- * an action's final status from the action result, which the upstream template never sends.
- */
-class InstantRoverAction : public adapter::VDAAction
-{
-public:
-    void configure() override { link_ = infrastructure::RoverLink::forNode(node_); }
-
-    void initialize() override
-    {
-        const auto result = command();
-        current_action_msg_.result_description = result.message;
-        update_action_state(result.ok ? STATES::FINISHED : STATES::FAILED);
-    }
-
-    void finish() override { goal_handle_->succeed(result_); }
-    void fail() override { goal_handle_->abort(result_); }
-
-protected:
-    virtual application::CommandResult command() = 0;
-
-    std::shared_ptr<infrastructure::RoverLink> link_;
-};
 
 /** @brief VDA 5050 startPause: stop driving and keep the order. */
 class StartPause : public InstantRoverAction

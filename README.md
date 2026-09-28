@@ -48,6 +48,7 @@ behind the manager's back.
 | Node reached | `mission_state.current_index` advancing |
 | `cancelOrder` | `run_mission false` |
 | `startPause` / `stopPause` | `run_mission false` and keep the route / `set_mission` with the nodes not yet reached (the manager has no pause) |
+| `enableAuxOutput` / `disableAuxOutput` (instant, node) | `hardware_interface/aux_output_<n-1>/set` for each output named by `outputs` (see below) |
 | `stateRequest`, `factsheetRequest` | Answered by the upstream controller |
 | `operatingMode` | Drive mode AUTOMATIC → `AUTOMATIC`; ASSISTED and MANUAL → `MANUAL` (an operator drives; `SEMIAUTOMATIC` would mean master control's orders run); no drive-mode manager → `SERVICE` |
 | `paused` | `startPause`, or the mission manager holding the mission (motion lock, dead lidar) |
@@ -62,6 +63,32 @@ Rover errors are never `FATAL`: the upstream controller stops dispatching naviga
 `FATAL` error is present. A failed or refused order still ends with the controller's own `FATAL`
 `noRouteError`, and master control has to `cancelOrder` it before sending a new order.
 
+### Aux outputs
+
+`enableAuxOutput` and `disableAuxOutput` switch the six aux outputs on the safety PLC. These
+are general-purpose outputs, not part of the safety chain. Output 1 is DIO00 and output 6 is
+DIO05, numbered 1..6 as in the drive UI. The only parameter is `outputs`: a single number or a
+list.
+
+```json
+{"actionType": "enableAuxOutput", "actionId": "…", "blockingType": "NONE",
+ "actionParameters": [{"key": "outputs", "value": [1, 3]}]}
+```
+
+- **Success:** the action is `FINISHED` once the PLC has acknowledged every write.
+  `resultDescription` then says what was switched, for example `Aux outputs 1, 3 enabled.`
+- **Bad parameter:** a missing `outputs`, or a number outside 1..6, writes nothing and ends
+  `FAILED`.
+- **Failed write:** the other outputs are still written, and the action ends `FAILED`. The
+  reason is in the controller's `ACTION_FAILED` error.
+- **Several outputs in one step:** put them in one action's list. The upstream adapter rejects a
+  second action of the same type while the first is still running. That includes two
+  `enableAuxOutput` in one `instantActions` message, and two `NONE`/`SOFT` ones on the same node.
+- **Blocking type on a node:** a `HARD` or `SOFT` aux action ends the drivable segment, so the
+  rover stops on the node until the action finishes. The IO write is one Modbus round-trip per
+  output, so the stop is short. A `NONE` action runs as the rover drives through the node.
+- **Services:** set by `rover.aux_output_service_prefix` and `rover.aux_output_timeout`.
+
 ### Decisions worth knowing
 
 - **Node headings** (`rover.orientation_mode`, default `path`): the rover arrives at each node
@@ -75,7 +102,7 @@ Rover errors are never `FATAL`: the upstream controller stops dispatching naviga
 - **Refused orders** do not stop a mission the rover is already running for someone else (e.g.
   an operator's GoTo). Only a mission this connector dispatched, or one whose `set_mission` timed
   out, is cancelled.
-- **Not supported:** node and edge actions other than the two pause actions, `initPosition`,
+- **Not supported:** node and edge actions other than the aux-output actions, `initPosition`,
   edge `maxSpeed` and trajectories, loads, and the `allowedDeviation*` tolerances (the mission
   manager uses Nav 2's goal checker). An unsupported action is forwarded to the adapter, which
   rejects it, and it shows up as `FAILED` in `actionStates`.
@@ -108,7 +135,8 @@ colcon test --packages-select rover_vda5050_adapter && colcon test-result --verb
 ```
 
 Unit tests cover the route tracking (progress, stitching, pause/resume, other missions' states),
-the command use case (refusals, timeouts, cancel) and the state mapping. A domain-purity check
+the command use case (refusals, timeouts, cancel), the state mapping, and the aux-output
+parameter parsing and use case. A domain-purity check
 fails the build if `domain/` includes a ROS header.
 
 `scripts/fake_master.py` is a minimal master control for manual tests (needs `python3-paho-mqtt`):
@@ -118,6 +146,17 @@ ros2 run rover_vda5050_bringup fake_master.py watch                  # print con
 ros2 run rover_vda5050_bringup fake_master.py order 2,0 4,0 4,2      # from the current position
 ros2 run rover_vda5050_bringup fake_master.py order --order-id <id> --update 1 --from-node n4 6,2  # stitch
 ros2 run rover_vda5050_bringup fake_master.py pause | resume | cancel | factsheet
+ros2 run rover_vda5050_bringup fake_master.py aux on 1 3 | aux off 3    # aux outputs
+ros2 run rover_vda5050_bringup fake_master.py order 2,0 4,0 \
+    --node-action 1:enableAuxOutput:2:HARD --node-action 2:disableAuxOutput:2   # on nodes
+```
+
+Gazebo has no aux IO, because `gz_ros2_control` replaces the rover's hardware interface.
+`scripts/fake_aux_io.py` stands in for it. It serves the six services, publishes
+`aux_io_state`, and logs every write. `-p fail_output:=<n>` makes one output's writes fail.
+
+```bash
+ros2 run rover_vda5050_bringup fake_aux_io.py --ros-args -r __ns:=/rover
 ```
 
 For a real master control, NVIDIA's
@@ -133,7 +172,11 @@ Verified 2026-09-28 in Gazebo (`rover_gazebo`, Nav 2 with `localization_source:=
 - `startPause` / `stopPause` mid-route (the rover stops, then continues from the next node),
   including a resume one second after the pause;
 - `cancelOrder` mid-drive;
-- in-flight stitching.
+- in-flight stitching;
+- aux-output actions against `fake_aux_io.py`. Instant: on, off, a string list, output 7 and a
+  missing `outputs` both `FAILED`, and a missing service `FAILED` with the adapter still up.
+  Node: a `NONE` action on a node mid-segment, a `HARD` one, and a `NONE` one on the last node,
+  in one order. All three ran in order while the route was driven.
 
 Stitching needs `rover_mission_manager` from rover_orchestrator 60056e5 or later: before it,
 replacing a running mission failed its first waypoint. `fieldViolation` was checked with a

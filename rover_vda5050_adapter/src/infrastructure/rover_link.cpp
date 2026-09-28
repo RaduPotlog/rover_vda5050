@@ -22,6 +22,8 @@
 
 #include "tf2/exceptions.hpp"
 
+#include "rover_vda5050_adapter/domain/aux_outputs.hpp"
+#include "rover_vda5050_adapter/infrastructure/aux_output_client.hpp"
 #include "rover_vda5050_adapter/infrastructure/mission_manager_client.hpp"
 
 namespace rover_vda5050_adapter::infrastructure
@@ -198,6 +200,8 @@ RoverLinkConfig RoverLinkConfig::fromParameters(rclcpp::Node & node)
     config.localization_state_topic =
         name("rover.localization_state_topic", "localization_state");
     config.odom_topic = name("rover.odom_topic", "odom");
+    config.aux_output_service_prefix =
+        name("rover.aux_output_service_prefix", "hardware_interface/aux_output_");
 
     config.service_availability_timeout =
         node.declare_parameter<double>("rover.service_availability_timeout", 2.0);
@@ -205,6 +209,8 @@ RoverLinkConfig RoverLinkConfig::fromParameters(rclcpp::Node & node)
         node.declare_parameter<double>("rover.service_response_timeout", 3.0);
     config.pose_timeout = node.declare_parameter<double>("rover.pose_timeout", 2.0);
     config.status_timeout = node.declare_parameter<double>("rover.status_timeout", 2.0);
+    // The PLC acknowledges each write over Modbus; the drive UI allows the same 3 s.
+    config.aux_output_timeout = node.declare_parameter<double>("rover.aux_output_timeout", 3.0);
 
     return config;
 }
@@ -282,6 +288,12 @@ RoverLink::RoverLink(rclcpp::Node & node)
 
     navigation_ = std::make_unique<application::NavigationUseCase>(
         missions, pose_source_, config_.mission_prefix, config_.orientation_mode);
+
+    aux_outputs_ = std::make_unique<application::AuxOutputUseCase>(
+        std::make_shared<AuxOutputClient>(
+            node_, config_.aux_output_service_prefix, domain::kAuxOutputCount,
+            std::chrono::duration<double>(config_.service_availability_timeout),
+            std::chrono::duration<double>(config_.aux_output_timeout)));
 
     // QoS matches each publisher: the latched topics are transient-local depth 1.
     const auto latched = rclcpp::QoS(rclcpp::KeepLast(1)).reliable().transient_local();

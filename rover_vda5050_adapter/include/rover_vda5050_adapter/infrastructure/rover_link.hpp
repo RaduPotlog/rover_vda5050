@@ -32,6 +32,7 @@
 #include "tf2_ros/buffer.hpp"
 #include "tf2_ros/transform_listener.hpp"
 
+#include "rover_vda5050_adapter/application/aux_output_use_case.hpp"
 #include "rover_vda5050_adapter/application/navigation_use_case.hpp"
 #include "rover_vda5050_adapter/application/ports.hpp"
 #include "rover_vda5050_adapter/domain/rover_status.hpp"
@@ -59,11 +60,14 @@ struct RoverLinkConfig
     std::string motion_lock_topic;
     std::string localization_state_topic;
     std::string odom_topic;
+    /// Resolved service name up to the output index: <prefix><0..5>/set.
+    std::string aux_output_service_prefix;
 
     double service_availability_timeout{2.0};
     double service_response_timeout{3.0};
     double pose_timeout{2.0};
     double status_timeout{2.0};
+    double aux_output_timeout{3.0};
 
     /** @brief Declare and read the parameters on @p node. */
     static RoverLinkConfig fromParameters(rclcpp::Node & node);
@@ -121,6 +125,7 @@ public:
     explicit RoverLink(rclcpp::Node & node);
 
     application::NavigationUseCase & navigation() { return *navigation_; }
+    application::AuxOutputUseCase & auxOutputs() { return *aux_outputs_; }
     const RoverLinkConfig & config() const { return config_; }
 
     /** @brief Current state. Non-blocking; safe on the executor thread. */
@@ -138,6 +143,7 @@ private:
     RoverLinkConfig config_;
     std::shared_ptr<TfPoseSource> pose_source_;
     std::unique_ptr<application::NavigationUseCase> navigation_;
+    std::unique_ptr<application::AuxOutputUseCase> aux_outputs_;
 
     mutable std::mutex mutex_;
     std::optional<rover_msgs::msg::DriveMode> drive_mode_;

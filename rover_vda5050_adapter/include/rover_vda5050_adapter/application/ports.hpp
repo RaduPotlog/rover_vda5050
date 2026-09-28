@@ -63,6 +63,22 @@ public:
     virtual std::optional<domain::Pose2D> currentPose() const = 0;
 };
 
+/**
+ * @brief Outbound port to the aux outputs on the safety PLC.
+ *
+ * Implemented by the hardware interface's aux_output_<i>/set service clients. Blocks until the
+ * PLC has acknowledged the write or a timeout expires, so never call it from the thread that
+ * services the client's responses.
+ */
+class AuxOutputPort
+{
+public:
+    virtual ~AuxOutputPort() = default;
+
+    /** @brief Switch one output; @p index is 0-based (0 = DIO00). */
+    virtual CommandResult set(int index, bool enabled) = 0;
+};
+
 }  // namespace rover_vda5050_adapter::application
 
 #endif  // ROVER_VDA5050_ADAPTER_APPLICATION_PORTS_HPP_

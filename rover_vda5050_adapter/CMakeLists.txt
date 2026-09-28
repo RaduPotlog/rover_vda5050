@@ -27,8 +27,10 @@ endforeach()
 # Domain + application: plain C++, no ROS dependencies. Kept in its own target so the
 # boundary is enforced by the linker as well as by scripts/check_domain_purity.sh.
 add_library(${PROJECT_NAME}_core STATIC
+    src/domain/aux_outputs.cpp
     src/domain/route_tracker.cpp
     src/domain/rover_status.cpp
+    src/application/aux_output_use_case.cpp
     src/application/navigation_use_case.cpp)
 target_include_directories(${PROJECT_NAME}_core PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -38,9 +40,11 @@ set_property(TARGET ${PROJECT_NAME}_core PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 # Infrastructure + the handler plugins the connector's adapter node loads (plugins.xml).
 add_library(${PROJECT_NAME}_plugins SHARED
+    src/infrastructure/aux_output_client.cpp
     src/infrastructure/mission_manager_client.cpp
     src/infrastructure/rover_link.cpp
     src/infrastructure/vda_conversions.cpp
+    src/plugins/aux_output_actions.cpp
     src/plugins/mission_nav_through_nodes.cpp
     src/plugins/pause_actions.cpp
     src/plugins/rover_state_handler.cpp)
@@ -82,6 +86,12 @@ if(BUILD_TESTING)
 
     ament_add_gtest(test_navigation_use_case test/unit/test_navigation_use_case.cpp)
     target_link_libraries(test_navigation_use_case ${PROJECT_NAME}_core)
+
+    ament_add_gtest(test_aux_outputs test/unit/test_aux_outputs.cpp)
+    target_link_libraries(test_aux_outputs ${PROJECT_NAME}_core)
+
+    ament_add_gtest(test_aux_output_use_case test/unit/test_aux_output_use_case.cpp)
+    target_link_libraries(test_aux_output_use_case ${PROJECT_NAME}_core)
 
     # Mechanically enforce that domain/ never grows a ROS dependency.
     add_test(

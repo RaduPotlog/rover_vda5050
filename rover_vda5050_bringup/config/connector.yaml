@@ -72,7 +72,7 @@
       handler: "rover_vda5050_adapter::plugins::MissionNavThroughNodes"
 
     # cancelOrder, stateRequest and factsheetRequest are handled by the controller itself.
-    vda_action_handlers: ["startPause", "stopPause"]
+    vda_action_handlers: ["startPause", "stopPause", "enableAuxOutput", "disableAuxOutput"]
     start_pause:
       handler: "rover_vda5050_adapter::plugins::StartPause"
       description: "Stop driving and keep the order; stopPause continues it."
@@ -89,6 +89,36 @@
         instant: true
         node: false
         edge: false
+
+    # Aux outputs 1..6 = safety PLC DIO00..05 (hardware_interface/aux_output_0..5/set); not part
+    # of the safety chain. One action switches every output its list names: the connector
+    # rejects a second action of the same type while the first is still running.
+    enable_aux_output:
+      handler: "rover_vda5050_adapter::plugins::EnableAuxOutput"
+      description: "Switch aux outputs on (safety PLC DIO00..05)."
+      result_description: "The outputs switched, or why not."
+      scopes:
+        instant: true
+        node: true
+        edge: false
+      parameters: ["outputs"]
+      parameter_outputs:
+        data_type: "ARRAY"
+        description: "Output number 1..6 (1 = DIO00), or a list of them, e.g. [1, 3]."
+        is_optional: false
+    disable_aux_output:
+      handler: "rover_vda5050_adapter::plugins::DisableAuxOutput"
+      description: "Switch aux outputs off (safety PLC DIO00..05)."
+      result_description: "The outputs switched, or why not."
+      scopes:
+        instant: true
+        node: true
+        edge: false
+      parameters: ["outputs"]
+      parameter_outputs:
+        data_type: "ARRAY"
+        description: "Output number 1..6 (1 = DIO00), or a list of them, e.g. [1, 3]."
+        is_optional: false
 
     # rover_vda5050_adapter: how the orders reach the rover. Relative names resolve against
     # rover.namespace (not the connector's own <namespace>/vda5050); frames get the rover's
@@ -116,8 +146,12 @@
       motion_lock_topic: "motion_lock"
       localization_state_topic: "localization_state"
       odom_topic: "odom"
+      # enableAuxOutput / disableAuxOutput call <prefix><0..5>/set (std_srvs/SetBool).
+      aux_output_service_prefix: "hardware_interface/aux_output_"
       service_availability_timeout: 2.0
       service_response_timeout: 3.0
       # Older poses (map -> base TF) and status messages count as unknown.
       pose_timeout: 2.0
       status_timeout: 2.0
+      # Per output write; the service answers once the safety PLC has acknowledged it.
+      aux_output_timeout: 3.0

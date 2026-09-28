@@ -28,6 +28,7 @@ re-check each entry after a `git subtree pull`.
 | `vda5050_connector/vda5050_connector_py/mqtt_bridge.py` | `mqtt_client.Client(CallbackAPIVersion.VERSION1)` | paho-mqtt 2.x (Ubuntu 26.04's `python3-paho-mqtt`) makes the callback API version mandatory |
 | `vda5050_connector/vda5050_connector_py/mqtt_bridge.py` | Publish `connection` with QoS 1, retained | VDA 5050 requires it, and the last will is retained: a master subscribing after a reconnect otherwise read a stale `CONNECTIONBROKEN` |
 | `vda5050_connector/vda5050_connector_py/vda5050_controller.py` | Copy the adapter's `safety_state` into the published state | Upstream drops it, so an e-stop never reached master control |
+| `vda5050_connector/vda5050_connector_py/vda5050_controller.py` | `_process_node` appends the node's actions to `_current_node_actions` instead of replacing them | One navigation feedback can pass several nodes; replacing dropped the NONE actions (e.g. `enableAuxOutput`) of all but the last |
 | `vda5050_serializer/setup.cfg` | `script-dir`/`install-scripts` → `script_dir`/`install_scripts` | Dash-separated keys are rejected by current setuptools |
 
 ### Updating

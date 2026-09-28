@@ -1533,9 +1533,12 @@ class VDA5050Controller(Node):
             publish_now=True,
         )
 
-        self._current_node_actions = node.actions
+        # rover_vda5050: append instead of replace. One navigation feedback can pass several
+        # nodes (see _navigate_through_nodes_feedback_callback), and replacing dropped the NONE
+        # actions of every node but the last.
+        self._current_node_actions = self._current_node_actions + list(node.actions)
         self.logger.info(
-            f"Executing {len(self._current_node_actions)} actions of node: {node.node_id}."
+            f"Executing {len(node.actions)} actions of node: {node.node_id}."
         )
 
         if len(self._current_state.node_states) == 0:

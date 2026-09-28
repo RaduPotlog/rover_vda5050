@@ -20,6 +20,9 @@ Minimal VDA 5050 2.0 master control, for exercising the rover's connector by han
     fake_master.py order 2,0 4,0 4,2           # order from the current position via these points
     fake_master.py order --order-id o1 --update 1 --from-node n2 6,2   # stitch onto order o1
     fake_master.py pause | resume | cancel     # startPause / stopPause / cancelOrder
+    fake_master.py aux on 1 3 | aux off 3      # enableAuxOutput / disableAuxOutput, outputs 1..6
+    fake_master.py order 2,0 4,0 --node-action 1:enableAuxOutput:2:HARD \
+                                 --node-action 2:disableAuxOutput:2    # aux actions on nodes
     fake_master.py factsheet                   # factsheetRequest, prints the answer
 
 An order's first node is the rover's current position (read from its state), as VDA 5050
@@ -101,13 +104,36 @@ class Master:
         self._client.publish(f'{self._prefix}/{topic}', json.dumps(message), qos=0).wait_for_publish()
         print(f'-> {topic}: {json.dumps(message)}')
 
-    def instant_action(self, action_type: str):
-        self.publish('instantActions', {'actions': [{
-            'actionType': action_type,
-            'actionId': str(uuid.uuid4()),
-            'blockingType': 'HARD',
-            'actionParameters': [],
-        }]})
+    def instant_action(self, action_type: str, parameters: list = None):
+        self.publish('instantActions', {'actions': [
+            action(action_type, 'HARD', parameters or [])]})
+
+
+def action(action_type: str, blocking_type: str, parameters: list) -> dict:
+    return {
+        'actionType': action_type,
+        'actionId': str(uuid.uuid4()),
+        'blockingType': blocking_type,
+        'actionParameters': parameters,
+    }
+
+
+def outputs_parameter(outputs: list) -> list:
+    return [{'key': 'outputs', 'value': outputs}]
+
+
+def parse_node_action(text: str):
+    """INDEX:TYPE:OUTPUTS[:BLOCKING], e.g. 1:enableAuxOutput:2,3:HARD (INDEX 1 = first x,y)."""
+    fields = text.split(':')
+    if len(fields) not in (3, 4):
+        sys.exit(f"'{text}' is not INDEX:TYPE:OUTPUTS[:BLOCKING]")
+    try:
+        index = int(fields[0])
+        outputs = [int(v) for v in fields[2].split(',')]
+    except ValueError:
+        sys.exit(f"'{text}': INDEX and OUTPUTS must be integers")
+    blocking = fields[3].upper() if len(fields) == 4 else 'NONE'
+    return index, action(fields[1], blocking, outputs_parameter(outputs))
 
 
 def node(node_id: str, sequence_id: int, x: float, y: float, theta: float, map_id: str) -> dict:
@@ -165,6 +191,11 @@ def send_order(master: Master, args):
         nodes.append(node(f'n{sequence}', sequence, x, y, 0.0, map_id))
         edges.append(edge(sequence - 1, nodes[-2], nodes[-1]))
 
+    for index, node_action in (parse_node_action(a) for a in args.node_action):
+        if not 0 <= index < len(nodes):
+            sys.exit(f'--node-action index {index} is not a node of this order (0..{len(nodes) - 1})')
+        nodes[index]['actions'].append(node_action)
+
     master.publish('order', {
         'orderId': args.order_id or f'order-{uuid.uuid4().hex[:8]}',
         'orderUpdateId': args.update,
@@ -180,7 +211,7 @@ def summarize(topic: str, payload: dict) -> str:
                 f"nodes_left={[n['nodeId'] for n in payload.get('nodeStates', [])]} "
                 f"driving={payload.get('driving')} paused={payload.get('paused')} "
                 f"mode={payload.get('operatingMode')} "
-                f"actions={[(a.get('actionType'), a['actionStatus']) for a in payload.get('actionStates', [])]} "
+                f"actions={[(a.get('actionType'), a['actionStatus'], a.get('resultDescription', '')) for a in payload.get('actionStates', [])]} "
                 f"errors={[(e['errorType'], e.get('errorDescription')) for e in payload.get('errors', [])]}")
     if topic == 'connection':
         return f"connection: {payload.get('connectionState')}"
@@ -215,6 +246,12 @@ def main():
     order.add_argument('--update', type=int, default=0, help='orderUpdateId')
     order.add_argument('--from-node', default='',
                        help='Stitch: nodeId of the last base node of the running order')
+    order.add_argument('--node-action', action='append', default=[],
+                       help='INDEX:TYPE:OUTPUTS[:BLOCKING] (default NONE); INDEX 0 is the start '
+                            'node, 1 the first x,y. Repeatable.')
+    aux = commands.add_parser('aux')
+    aux.add_argument('state', choices=['on', 'off'])
+    aux.add_argument('outputs', nargs='+', type=int, help='Aux outputs 1..6')
     commands.add_parser('pause')
     commands.add_parser('resume')
     commands.add_parser('cancel')
@@ -226,6 +263,10 @@ def main():
     try:
         if args.command == 'order':
             send_order(master, args)
+        elif args.command == 'aux':
+            master.instant_action(
+                'enableAuxOutput' if args.state == 'on' else 'disableAuxOutput',
+                outputs_parameter(args.outputs))
         elif args.command == 'pause':
             master.instant_action('startPause')
         elif args.command == 'resume':
