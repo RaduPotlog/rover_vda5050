@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>rover_vda5050</name>
+  <version>1.0.0</version>
+  <description>
+    Metapackage of the Rover A1 VDA 5050 container: the vendored InOrbit connector and the rover's
+    adapter and bringup.
+  </description>
+  <maintainer email="potlogradu@gmail.com">root</maintainer>
+  <license>Apache License 2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rover_vda5050_adapter</depend>
+  <depend>rover_vda5050_bringup</depend>
+  <depend>vda5050_connector</depend>
+  <depend>vda5050_msgs</depend>
+  <depend>vda5050_serializer</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

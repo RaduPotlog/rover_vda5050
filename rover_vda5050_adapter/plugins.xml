@@ -1,0 +1,16 @@
+<library path="rover_vda5050_adapter_plugins">
+  <class type="rover_vda5050_adapter::plugins::MissionNavThroughNodes"
+         base_class_type="adapter::NavThroughNodes">
+    <description>Drives a VDA 5050 route through rover_mission_manager (set_mission / run_mission).</description>
+  </class>
+  <class type="rover_vda5050_adapter::plugins::RoverStateHandler"
+         base_class_type="adapter::StateHandler">
+    <description>Position, velocity, battery, operating mode, pause, safety and errors of the rover.</description>
+  </class>
+  <class type="rover_vda5050_adapter::plugins::StartPause" base_class_type="adapter::VDAAction">
+    <description>VDA 5050 startPause: stop driving and keep the order.</description>
+  </class>
+  <class type="rover_vda5050_adapter::plugins::StopPause" base_class_type="adapter::VDAAction">
+    <description>VDA 5050 stopPause: continue the order from the first node not yet reached.</description>
+  </class>
+</library>

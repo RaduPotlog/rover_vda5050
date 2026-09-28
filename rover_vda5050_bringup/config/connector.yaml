@@ -1,0 +1,123 @@
+# VDA 5050 connector for Rover A1: InOrbit's mqtt_bridge + controller (third_party/) and the
+# connector's adapter node loading rover_vda5050_adapter's plugins.
+#
+# vda5050.launch.py overrides the identity and broker parameters from its arguments (and those
+# from the ROVER_VDA5050_* container variables); the values here are the defaults for a manual
+# `ros2 launch` without arguments. The node keys match any namespace.
+
+/**/mqtt_bridge:
+  ros__parameters:
+    mqtt_address: "localhost"
+    mqtt_port: 1883
+    # Empty username: no TLS and no authentication (the rover's own broker, LAN only).
+    mqtt_username: ""
+    mqtt_password: ""
+    manufacturer_name: "MechatronicsAcademy"
+    serial_number: "rover_a1"
+    # Topics are <interface_name>/v2/<manufacturer_name>/<serial_number>/<topic>.
+    interface_name: "uagv"
+    vda5050_protocol_version: "2.0.0"
+
+/**/controller:
+  ros__parameters:
+    # robot_name names the controller <-> adapter ROS interfaces; keep it equal to the adapter's.
+    robot_name: "rover_a1"
+    manufacturer_name: "MechatronicsAcademy"
+    serial_number: "rover_a1"
+    protocol_version: "2.0.0"
+    interface_name: "uagv"
+
+    # Send each released base segment as one NavigateThroughNodes goal, extended in flight when
+    # master control stitches the order. The adapter implements no NavigateToNode handler.
+    enable_nav_through_nodes: true
+
+    # The adapter queries the rover on every publish. VDA 5050 asks for state at least every
+    # 30 s and on every event; the controller also publishes on events.
+    state_pub_period: 1.0
+    visualization_pub_period: 0.5
+    connection_pub_period: 15.0
+
+    factsheet:
+      type_specification:
+        series_name: "Rover A1"
+        series_description: "Outdoor skid-steer rover (Mechatronics Academy)"
+        # Skid steer turns like a differential drive; VDA 5050 2.0 has no closer kinematic type.
+        agv_kinematic: "DIFF"
+        agv_class: "CARRIER"
+        max_load_mass: 0.0          # TBD: no payload rating recorded
+        localization_types: ["NATURAL"]
+        navigation_types: ["AUTONOMOUS"]
+      physical_parameters:
+        # rover_navigation/config/rover_nav_params.yaml, velocity_smoother: max_velocity[0] and
+        # max_accel[0] / max_decel[0].
+        speed_min: 0.0
+        speed_max: 0.8
+        acceleration_max: 1.5
+        deceleration_max: 1.5
+        # rover_nav_params.yaml, footprint comment: 0.913 x 0.803 m (measured 2026-09-27).
+        length: 0.913
+        width: 0.803
+        height_min: 0.0             # TBD: not recorded
+        height_max: 0.0             # TBD: not recorded
+
+/**/adapter:
+  ros__parameters:
+    robot_name: "rover_a1"
+    manufacturer_name: "MechatronicsAcademy"
+    serial_number: "rover_a1"
+
+    state_handler_names: ["rover_vda5050_adapter::plugins::RoverStateHandler"]
+
+    nav_through_nodes:
+      handler: "rover_vda5050_adapter::plugins::MissionNavThroughNodes"
+
+    # cancelOrder, stateRequest and factsheetRequest are handled by the controller itself.
+    vda_action_handlers: ["startPause", "stopPause"]
+    start_pause:
+      handler: "rover_vda5050_adapter::plugins::StartPause"
+      description: "Stop driving and keep the order; stopPause continues it."
+      result_description: "Paused."
+      scopes:
+        instant: true
+        node: false
+        edge: false
+    stop_pause:
+      handler: "rover_vda5050_adapter::plugins::StopPause"
+      description: "Continue the order from the first node not yet reached."
+      result_description: "Resumed."
+      scopes:
+        instant: true
+        node: false
+        edge: false
+
+    # rover_vda5050_adapter: how the orders reach the rover. Relative names resolve against
+    # rover.namespace (not the connector's own <namespace>/vda5050); frames get the rover's
+    # <namespace>/ tf prefix unless they already name one.
+    rover:
+      namespace: "rover"
+      # Nav 2's global frame. Order node positions are taken to be in this frame, and
+      # rover_mission_manager refuses missions in any other: with localization_source odom set
+      # this to "odom".
+      map_frame: "map"
+      base_frame: "base_link"
+      # Reported as mapId when rover_indoor_nav_manager does not name the map in use.
+      map_id: ""
+      mission_prefix: "vda5050"
+      # "path": arrive at each node facing along the edge driven in on (skid steer turns in
+      # place poorly, and the ROS message cannot tell an omitted theta from 0). "node": use each
+      # node's theta.
+      orientation_mode: "path"
+      set_mission_service: "set_mission"
+      run_mission_service: "run_mission"
+      mission_state_topic: "mission_state"
+      drive_mode_topic: "drive_mode"
+      battery_topic: "rover_battery/battery_status"
+      safety_status_topic: "hardware_interface/safety_status"
+      motion_lock_topic: "motion_lock"
+      localization_state_topic: "localization_state"
+      odom_topic: "odom"
+      service_availability_timeout: 2.0
+      service_response_timeout: 3.0
+      # Older poses (map -> base TF) and status messages count as unknown.
+      pose_timeout: 2.0
+      status_timeout: 2.0

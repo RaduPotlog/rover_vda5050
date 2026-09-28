@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>rover_vda5050_bringup</name>
+  <version>1.0.0</version>
+  <description>
+    Launch and configuration of the Rover A1 VDA 5050 connector (MQTT bridge, controller, rover
+    adapter), the local Mosquitto broker's configuration and a minimal test master control.
+  </description>
+  <maintainer email="potlogradu@gmail.com">root</maintainer>
+  <license>Apache License 2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>python3-paho-mqtt</exec_depend>
+  <exec_depend>rover_vda5050_adapter</exec_depend>
+  <exec_depend>vda5050_connector</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
