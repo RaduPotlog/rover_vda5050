@@ -45,6 +45,7 @@ from vda5050_connector_py.utils import convert_ros_message_to_json
 from vda5050_msgs.msg import Order
 from vda5050_msgs.msg import Node
 from vda5050_msgs.msg import Edge
+from vda5050_msgs.msg import Factsheet
 from vda5050_msgs.msg import OrderState
 from vda5050_msgs.msg import Action
 from vda5050_msgs.msg import Connection
@@ -514,6 +515,13 @@ def test_vda5050_mqtt_bridge_subscriptions(setup_rclpy, mocker, mock_mqtt_client
         msg_type=Visualization,
         topic="/uagv/v1/robots/robot_1/visualization",
         callback=mqtt_bridge._publish_visualization,
+        qos_profile=10,
+    )
+    # rover_vda5050: the factsheet is forwarded too (test_mqtt_bridge_factsheet.py).
+    mqtt_bridge.create_subscription.assert_any_call(
+        msg_type=Factsheet,
+        topic="/uagv/v1/robots/robot_1/factsheet",
+        callback=mqtt_bridge._publish_factsheet,
         qos_profile=10,
     )
 

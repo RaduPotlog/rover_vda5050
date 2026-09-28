@@ -57,6 +57,7 @@ from vda5050_msgs.msg import ActionParameter as VDAActionParameter
 from vda5050_msgs.msg import Connection as VDAConnection
 from vda5050_msgs.msg import ControlPoint as VDAControlPoint
 from vda5050_msgs.msg import Edge as VDAEdge
+from vda5050_msgs.msg import Factsheet as VDAFactsheet
 from vda5050_msgs.msg import InstantActions as VDAInstantActions
 from vda5050_msgs.msg import Node as VDANode
 from vda5050_msgs.msg import NodePosition as VDANodePosition
@@ -443,6 +444,20 @@ class MQTTBridge(Node):
             qos_profile=10,
         )
 
+        # rover_vda5050: forward the controller's factsheet. Upstream never subscribed to it, so a
+        # factsheetRequest was answered on ROS only and never reached master control.
+        self._factsheet_sub = self.create_subscription(
+            msg_type=VDAFactsheet,
+            topic=get_vda5050_ros2_topic(
+                manufacturer=self._manufacturer_name,
+                serial_number=self._serial_number,
+                topic="factsheet",
+                interface_name=self._interface_name
+            ),
+            callback=self._publish_factsheet,
+            qos_profile=10,
+        )
+
         self._order_pub = self.create_publisher(
             msg_type=VDAOrder,
             topic=get_vda5050_ros2_topic(
@@ -589,6 +604,26 @@ class MQTTBridge(Node):
         # Unretained, a master subscribing after a reconnect still got the retained
         # CONNECTIONBROKEN will.
         return self._publish_to_topic(msg, topic, qos=1, retain=True)
+
+    def _publish_factsheet(self, msg: VDAFactsheet):
+        """
+        Publish ROS2 Factsheet message to the corresponding VDA5050 MQTT topic.
+
+        rover_vda5050: retained, so a master control subscribing later still gets the last one.
+
+        Args:
+        ----
+            msg (VDAFactsheet): VDA5050 ROS2 Factsheet message.
+
+        """
+        topic = get_vda5050_mqtt_topic(
+            manufacturer=self._manufacturer_name,
+            serial_number=self._serial_number,
+            topic="factsheet",
+            major_version=self.vda5050_version_alias,
+            interface_name=self._interface_name
+        )
+        return self._publish_to_topic(msg, topic, retain=True)
 
     def _publish_visualization(self, msg: VDAVisualization):
         """

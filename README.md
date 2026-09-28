@@ -49,7 +49,7 @@ behind the manager's back.
 | `cancelOrder` | `run_mission false` |
 | `startPause` / `stopPause` | `run_mission false` and keep the route / `set_mission` with the nodes not yet reached (the manager has no pause) |
 | `enableAuxOutput` / `disableAuxOutput` (instant, node) | `hardware_interface/aux_output_<n-1>/set` for each output named by `outputs` (see below) |
-| `stateRequest`, `factsheetRequest` | Answered by the upstream controller |
+| `stateRequest`, `factsheetRequest` | Answered by the upstream controller. The factsheet is published retained on `…/factsheet`, and its `agvActions` lists every action here |
 | `operatingMode` | Drive mode AUTOMATIC → `AUTOMATIC`; ASSISTED and MANUAL → `MANUAL` (an operator drives; `SEMIAUTOMATIC` would mean master control's orders run); no drive-mode manager → `SERVICE` |
 | `paused` | `startPause`, or the mission manager holding the mission (motion lock, dead lidar) |
 | `agvPosition` | TF `<ns>/<map_frame>` → `<ns>/base_link`; `positionInitialized` false when missing or older than 2 s. `mapId` = the indoor map in use, else `rover.map_id` |
