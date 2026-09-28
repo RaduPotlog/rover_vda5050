@@ -126,12 +126,18 @@ For a real master control, NVIDIA's
 [vda5050_visualizer](https://github.com/bekirbostanci/vda5050_visualizer) watches the traffic over
 the broker's WebSockets port (9001).
 
-Verified 2026-09-28 against the real `rover_mission_manager` with a stand-in for the rover (drive
-mode, motion lock, TF, battery and a fake `navigate_to_pose`):
-- a three-node order, driven node by node;
-- `startPause` / `stopPause` mid-route, resuming at the next node;
-- `cancelOrder`;
-- in-flight stitching;
-- the refusal in Assisted mode, including `fieldViolation`.
+Verified 2026-09-28 in Gazebo (`rover_gazebo`, Nav 2 with `localization_source:=slam`,
+`rover_drive_mode`, `rover_mission_manager`):
+- the refusal in Assisted mode (`MANUAL`, `missionRefused`);
+- a four-node order around an obstacle;
+- `startPause` / `stopPause` mid-route (the rover stops, then continues from the next node),
+  including a resume one second after the pause;
+- `cancelOrder` mid-drive;
+- in-flight stitching.
 
-Not yet run in Gazebo or on the rover.
+Stitching needs `rover_mission_manager` from rover_orchestrator 60056e5 or later: before it,
+replacing a running mission failed its first waypoint. `fieldViolation` was checked with a
+stand-in rover.
+
+A leg that Nav 2 cannot plan fails the order like any other navigation failure (`noRouteError`,
+then `cancelOrder`). Not yet run on the rover.

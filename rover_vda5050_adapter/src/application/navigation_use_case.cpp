@@ -90,6 +90,8 @@ CommandResult NavigationUseCase::cancel()
         // failure of the rover.
         tracker_.clear();
         updates_.clear();
+        // Master control has dealt with the order; a refusal of it is no longer news.
+        last_refusal_.reset();
     }
 
     if (!had_mission) {

@@ -115,6 +115,16 @@ TEST_F(Fixture, ARefusedRouteIsReportedAndLeavesOtherMissionsAlone)
     EXPECT_FALSE(navigation.lastRefusal());
 }
 
+TEST_F(Fixture, CancelClearsARefusal)
+{
+    missions->next_dispatch = {false, "Drive mode is not AUTOMATIC", false};
+    EXPECT_FALSE(navigation.start(nodes(1)).ok);
+
+    // master control's cancelOrder after the failed order
+    ASSERT_TRUE(navigation.cancel().ok);
+    EXPECT_FALSE(navigation.lastRefusal());
+}
+
 TEST_F(Fixture, ATimedOutDispatchIsCancelledInCaseItStarted)
 {
     missions->next_dispatch = {false, "no answer", true};

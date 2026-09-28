@@ -72,7 +72,7 @@ public:
     bool routeActive() const;
     /// Paused by startPause, or held by the rover's own motion lock.
     bool paused() const;
-    /// Why the mission manager refused the last mission; cleared by the next accepted one.
+    /// Why the mission manager refused the last mission; cleared by cancel() or the next accepted one.
     std::optional<std::string> lastRefusal() const;
 
 private:
