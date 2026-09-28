@@ -1324,7 +1324,7 @@ class VDA5050Controller(Node):
                         )
                     )
                 else:
-                    self.logger.warn(
+                    self.logger.warning(
                         "ExtendNavigation service unavailable; keeping in-flight goal "
                         "unchanged and falling back to post-goal dispatch."
                     )
@@ -1374,7 +1374,7 @@ class VDA5050Controller(Node):
 
         # Update error array and publish it
         # These reject orders will be delete them when a valid order is accepted
-        self.logger.warn(f"Order rejected: {order_error.error_description}")
+        self.logger.warning(f"Order rejected: {order_error.error_description}")
         self._update_state(
             {"errors": self._current_state.errors + [order_error]}, publish_now=True
         )
@@ -1644,7 +1644,7 @@ class VDA5050Controller(Node):
                     # Next edge is part of the horizon — request a base
                     # extension (§6.6.3).
                     if not self._current_state.new_base_request:
-                        self.logger.warn(
+                        self.logger.warning(
                             "Next edge is part of the horizon. "
                             "Stopping traversing of nodes."
                         )
@@ -1991,7 +1991,7 @@ class VDA5050Controller(Node):
             self.logger.info(
                 f"Navigation extended in-flight up to seq {last_seq}")
         else:
-            self.logger.warn(
+            self.logger.warning(
                 f"Could not extend navigation: {result.message}. "
                 "Will dispatch new goal when current finishes.")
 

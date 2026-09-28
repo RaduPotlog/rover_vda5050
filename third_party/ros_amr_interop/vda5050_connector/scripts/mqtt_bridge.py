@@ -31,12 +31,20 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import signal
+
 import rclpy
 from vda5050_connector_py.mqtt_bridge import MQTTBridge
 
 
 def main(args=None):
     rclpy.init(args=args)
+
+    # rover_vda5050 lyrical port: under rmw_zenoh_cpp, rclpy's SIGTERM handler shuts the context
+    # down but spin() never returns, so a container stop left this node hanging until SIGKILL
+    # and it never announced OFFLINE. SIGINT does unwind spin() (KeyboardInterrupt), so treat
+    # SIGTERM the same way.
+    signal.signal(signal.SIGTERM, signal.default_int_handler)
 
     mqtt_bridge = MQTTBridge()
 

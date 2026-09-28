@@ -67,6 +67,10 @@ from vda5050_msgs.msg import Visualization as VDAVisualization
 
 NODE_NAME = "mqtt_bridge"
 
+# rover_vda5050 lyrical port: how long on_shutdown waits for the broker to acknowledge the
+# offline Connection message. Well inside balena's 10 s stop grace period.
+SHUTDOWN_PUBLISH_TIMEOUT_S = 2.0
+
 
 def generate_vda_order_msg(order):
     """
@@ -383,7 +387,7 @@ class MQTTBridge(Node):
                 )
                 self._instant_actions_pub.publish(msg=vda_instant_actions_message)
         except KeyError as ex:
-            self.logger.warn(f"Ignoring invalid VDA5050 message: {ex}.")
+            self.logger.warning(f"Ignoring invalid VDA5050 message: {ex}.")
             return
 
     def on_disconnect_mqtt(self, client, userdata, rc):
@@ -479,7 +483,23 @@ class MQTTBridge(Node):
         if self._last_connection_msg:
             offline_message.header_id = self._last_connection_msg.header_id + 1
 
-        self._publish_connection(msg=offline_message)
+        was_connected = self.mqtt_client.is_connected()
+        offline_info = self._publish_connection(msg=offline_message)
+
+        # rover_vda5050 lyrical port: publish() only queues the message for the network thread,
+        # and the disconnect() below used to drop it, leaving the retained ONLINE on the broker (a
+        # clean DISCONNECT also suppresses the CONNECTIONBROKEN will). Wait for the broker to
+        # acknowledge it (QoS 1) first.
+        if was_connected:
+            try:
+                offline_info.wait_for_publish(timeout=SHUTDOWN_PUBLISH_TIMEOUT_S)
+            except (RuntimeError, ValueError) as ex:
+                self.logger.warning(f"Offline Connection message not sent: {ex}")
+            if not offline_info.is_published():
+                self.logger.warning(
+                    "Broker did not acknowledge the offline Connection message within "
+                    f"{SHUTDOWN_PUBLISH_TIMEOUT_S} s"
+                )
 
         self.logger.info("Unsubscribing from MQTT topics")
         self.mqtt_client.unsubscribe(
@@ -502,6 +522,8 @@ class MQTTBridge(Node):
         )
 
         self.mqtt_client.disconnect()
+        # rover_vda5050 lyrical port: let the network thread send the DISCONNECT and exit.
+        self.mqtt_client.loop_stop()
 
     def _publish_to_topic(self, msg, topic, qos=0, retain=False):
         """
@@ -514,10 +536,14 @@ class MQTTBridge(Node):
             qos (int): MQTT QoS level.
             retain (bool): Whether the broker keeps the message for late subscribers.
 
+        Returns
+        -------
+            MQTTMessageInfo: paho's handle to wait for the message to be sent.
+
         """
         json_msg = convert_ros_message_to_json(msg)
         self.logger.debug(f"Publishing MQTT message to topic {topic}: {json_msg}")
-        self.mqtt_client.publish(topic, json_msg, qos=qos, retain=retain)
+        return self.mqtt_client.publish(topic, json_msg, qos=qos, retain=retain)
 
     def _publish_state(self, msg: VDAOrderState):
         """
@@ -562,7 +588,7 @@ class MQTTBridge(Node):
         # rover_vda5050: VDA 5050 publishes connection with QoS 1, retained - like the last will.
         # Unretained, a master subscribing after a reconnect still got the retained
         # CONNECTIONBROKEN will.
-        self._publish_to_topic(msg, topic, qos=1, retain=True)
+        return self._publish_to_topic(msg, topic, qos=1, retain=True)
 
     def _publish_visualization(self, msg: VDAVisualization):
         """

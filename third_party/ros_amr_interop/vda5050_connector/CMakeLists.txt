@@ -119,6 +119,9 @@ if(BUILD_TESTING)
 
   set(_pytest_tests
     test/test_vda5050_controller.py
+    # rover_vda5050: OFFLINE on shutdown. test_vda5050_mqtt_bridge.py stays unregistered (it
+    # predates the lyrical port and 7 of its cases fail there).
+    test/test_mqtt_bridge_shutdown.py
   )
   foreach(_test_path ${_pytest_tests})
     get_filename_component(_test_name ${_test_path} NAME_WE)
