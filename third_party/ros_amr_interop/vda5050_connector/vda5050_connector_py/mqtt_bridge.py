@@ -503,7 +503,7 @@ class MQTTBridge(Node):
 
         self.mqtt_client.disconnect()
 
-    def _publish_to_topic(self, msg, topic):
+    def _publish_to_topic(self, msg, topic, qos=0, retain=False):
         """
         Publish a ROS2 message to an MQTT topic.
 
@@ -511,11 +511,13 @@ class MQTTBridge(Node):
         ----
             msg (Any): VDA5050 ROS2 message.
             topic (str): topic for publishing the VDA5050 MQTT message.
+            qos (int): MQTT QoS level.
+            retain (bool): Whether the broker keeps the message for late subscribers.
 
         """
         json_msg = convert_ros_message_to_json(msg)
         self.logger.debug(f"Publishing MQTT message to topic {topic}: {json_msg}")
-        self.mqtt_client.publish(topic, json_msg)
+        self.mqtt_client.publish(topic, json_msg, qos=qos, retain=retain)
 
     def _publish_state(self, msg: VDAOrderState):
         """
@@ -557,7 +559,10 @@ class MQTTBridge(Node):
             major_version=self.vda5050_version_alias,
             interface_name=self._interface_name
         )
-        self._publish_to_topic(msg, topic)
+        # rover_vda5050: VDA 5050 publishes connection with QoS 1, retained - like the last will.
+        # Unretained, a master subscribing after a reconnect still got the retained
+        # CONNECTIONBROKEN will.
+        self._publish_to_topic(msg, topic, qos=1, retain=True)
 
     def _publish_visualization(self, msg: VDAVisualization):
         """
