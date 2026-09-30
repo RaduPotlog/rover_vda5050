@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="icons/Logo-Arm-WhiteOrange-372x372-1.png" alt="Mechatronics Academy" width="140">
+</p>
+
 # rover_vda5050
 
 VDA 5050 fleet interface for Rover A1: a master control sends orders over MQTT, and the rover
