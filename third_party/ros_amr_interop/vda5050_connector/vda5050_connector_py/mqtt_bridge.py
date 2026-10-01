@@ -226,6 +226,34 @@ def generate_vda5050_topic_alias(vda_version):
             f"but got {vda_version}"
         )
 
+
+def use_tls(mqtt_username, tls_mode):
+    """
+    Decide whether the MQTT connection uses TLS.
+
+    Args:
+    ----
+        mqtt_username (string): Broker user name; empty means anonymous.
+        tls_mode (string): "auto" (TLS when a user name is set), "true" or "false".
+
+    Raises:
+    ------
+        ValueError if tls_mode is not one of the supported values.
+
+    Returns
+    -------
+        True if TLS must be enabled.
+    """
+    mode = tls_mode.strip().lower()
+    if mode == "auto":
+        return bool(mqtt_username)
+    if mode in ("true", "1", "yes", "on"):
+        return True
+    if mode in ("false", "0", "no", "off"):
+        return False
+    raise ValueError(f"Invalid VDA5050_CONNECTOR_TLS '{tls_mode}', expected auto, true or false")
+
+
 class MQTTBridge(Node):
     """Translates VDA5050 MQTT messages from and to ROS2."""
 
@@ -259,8 +287,9 @@ class MQTTBridge(Node):
         self.mqtt_client.on_message = self.on_message_mqtt
         self.mqtt_client.on_disconnect = self.on_disconnect_mqtt
 
-        # Enable TLS if username is provided
-        if mqtt_username:
+        # Enable TLS if username is provided, unless VDA5050_CONNECTOR_TLS says otherwise
+        # rover_vda5050: "false" keeps user/password over plaintext (e.g. inside a VPN).
+        if use_tls(mqtt_username, os.getenv("VDA5050_CONNECTOR_TLS", "auto")):
             self.mqtt_client.tls_set(
                 ca_certs=os.getenv(
                     key="VDA5050_CONNECTOR_TLS_CA_CERT",
@@ -268,6 +297,7 @@ class MQTTBridge(Node):
                 ),
                 tls_version=ssl.PROTOCOL_TLSv1_2,
             )
+        if mqtt_username:
             self.mqtt_client.username_pw_set(
                 username=mqtt_username, password=mqtt_password
             )
