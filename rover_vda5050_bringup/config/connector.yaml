@@ -72,7 +72,8 @@
       handler: "rover_vda5050_adapter::plugins::MissionNavThroughNodes"
 
     # cancelOrder, stateRequest and factsheetRequest are handled by the controller itself.
-    vda_action_handlers: ["startPause", "stopPause", "enableAuxOutput", "disableAuxOutput"]
+    vda_action_handlers:
+      ["startPause", "stopPause", "enableAuxOutput", "disableAuxOutput", "setDriveMode"]
     start_pause:
       handler: "rover_vda5050_adapter::plugins::StartPause"
       description: "Stop driving and keep the order; stopPause continues it."
@@ -120,6 +121,23 @@
         description: "Output number 1..6 (1 = DIO00), or a list of them, e.g. [1, 3]."
         is_optional: false
 
+    # Custom: VDA 5050 has no master-control command for operatingMode. Calls rover_drive_mode's
+    # set_drive_mode; the new mode shows in the state's operatingMode. Served in every operating
+    # mode (MANUAL included), so fleet control can hand a Manual rover back to Automatic.
+    set_drive_mode:
+      handler: "rover_vda5050_adapter::plugins::SetDriveMode"
+      description: "Switch the rover to Manual (stop automation) or Automatic (fleet control drives)."
+      result_description: "The drive mode in force, or why the drive mode manager refused."
+      scopes:
+        instant: true
+        node: false
+        edge: false
+      parameters: ["mode"]
+      parameter_mode:
+        data_type: "STRING"
+        description: "MANUAL or AUTOMATIC. Assisted is chosen on the rover's drive UI only."
+        is_optional: false
+
     # rover_vda5050_adapter: how the orders reach the rover. Relative names resolve against
     # rover.namespace (not the connector's own <namespace>/vda5050); frames get the rover's
     # <namespace>/ tf prefix unless they already name one.
@@ -141,6 +159,8 @@
       run_mission_service: "run_mission"
       mission_state_topic: "mission_state"
       drive_mode_topic: "drive_mode"
+      # setDriveMode calls it (rover_msgs/SetDriveMode); service_*_timeout apply.
+      drive_mode_service: "set_drive_mode"
       battery_topic: "rover_battery/battery_status"
       safety_status_topic: "hardware_interface/safety_status"
       motion_lock_topic: "motion_lock"

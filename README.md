@@ -53,6 +53,7 @@ behind the manager's back.
 | `cancelOrder` | `run_mission false` |
 | `startPause` / `stopPause` | `run_mission false` and keep the route / `set_mission` with the nodes not yet reached (the manager has no pause) |
 | `enableAuxOutput` / `disableAuxOutput` (instant, node) | `hardware_interface/aux_output_<n-1>/set` for each output named by `outputs` (see below) |
+| `setDriveMode` (custom, instant) | `set_drive_mode` (`rover_msgs/SetDriveMode`) with `mode` `MANUAL` or `AUTOMATIC` (see below) |
 | `stateRequest`, `factsheetRequest` | Answered by the upstream controller. The factsheet is published retained on `…/factsheet`, and its `agvActions` lists every action here |
 | `operatingMode` | Drive mode AUTOMATIC → `AUTOMATIC`; ASSISTED and MANUAL → `MANUAL` (an operator drives; `SEMIAUTOMATIC` would mean master control's orders run); no drive-mode manager → `SERVICE` |
 | `paused` | `startPause`, or the mission manager holding the mission (motion lock, dead lidar) |
@@ -92,6 +93,33 @@ list.
   rover stops on the node until the action finishes. The IO write is one Modbus round-trip per
   output, so the stop is short. A `NONE` action runs as the rover drives through the node.
 - **Services:** set by `rover.aux_output_service_prefix` and `rover.aux_output_timeout`.
+
+### Drive mode
+
+`setDriveMode` lets master control switch the rover to Manual or Automatic. VDA 5050 has no
+command for `operatingMode`: the robot only reports it. So this is a custom instant action.
+Open-RMF's dashboard uses it (rover_rmf, Rover card).
+
+```json
+{"actionType": "setDriveMode", "actionId": "…", "blockingType": "HARD",
+ "actionParameters": [{"key": "mode", "value": "MANUAL"}]}
+```
+
+- **What it does:** it calls `rover_drive_mode`'s `set_drive_mode`, exactly as the drive UI's mode
+  buttons do. The drive mode manager stays in charge. The new mode reaches master control through
+  `operatingMode`.
+- **`mode`:** `MANUAL` or `AUTOMATIC`. Case and quotes don't matter. Assisted can only be chosen
+  on the drive UI, where someone is watching the rover.
+- **Success:** `FINISHED` with `resultDescription` `Drive mode Manual.` (or Automatic).
+- **Refused:** `FAILED` with the manager's reason, e.g. Automatic while `rover_mission_manager`
+  is missing. The same happens when `set_drive_mode` is unavailable or doesn't answer within
+  `rover.service_response_timeout`.
+- **Served in Manual too:** VDA 5050's operating-mode table says a robot in `MANUAL` processes no
+  instant actions. This one is served anyway, because handing a Manual rover back to Automatic is
+  what it is for. The upstream controller doesn't gate instant actions on the operating mode.
+- **Not a safety function:** neither are the drive modes (rover_ros `rover_arch/SAFETY_CHAIN.md`).
+  The e-stop, the safety PLC and the lidar monitor are unaffected.
+- **Service:** `rover.drive_mode_service` (default `set_drive_mode`).
 
 ### Decisions worth knowing
 
@@ -151,6 +179,7 @@ ros2 run rover_vda5050_bringup fake_master.py order 2,0 4,0 4,2      # from the 
 ros2 run rover_vda5050_bringup fake_master.py order --order-id <id> --update 1 --from-node n4 6,2  # stitch
 ros2 run rover_vda5050_bringup fake_master.py pause | resume | cancel | factsheet
 ros2 run rover_vda5050_bringup fake_master.py aux on 1 3 | aux off 3    # aux outputs
+ros2 run rover_vda5050_bringup fake_master.py drive-mode MANUAL | drive-mode AUTOMATIC
 ros2 run rover_vda5050_bringup fake_master.py order 2,0 4,0 \
     --node-action 1:enableAuxOutput:2:HARD --node-action 2:disableAuxOutput:2   # on nodes
 ```

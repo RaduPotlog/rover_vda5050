@@ -24,6 +24,7 @@ Minimal VDA 5050 2.0 master control, for exercising the rover's connector by han
     fake_master.py order 2,0 4,0 --node-action 1:enableAuxOutput:2:HARD \
                                  --node-action 2:disableAuxOutput:2    # aux actions on nodes
     fake_master.py factsheet                   # factsheetRequest, prints the answer
+    fake_master.py drive-mode MANUAL           # setDriveMode (custom): MANUAL or AUTOMATIC
 
 An order's first node is the rover's current position (read from its state), as VDA 5050
 requires; each x,y after it is a released node joined by a released edge.
@@ -256,6 +257,8 @@ def main():
     commands.add_parser('resume')
     commands.add_parser('cancel')
     commands.add_parser('factsheet')
+    drive_mode = commands.add_parser('drive-mode')
+    drive_mode.add_argument('mode', choices=['MANUAL', 'AUTOMATIC'])
 
     args = parser.parse_args()
     master = Master(args)
@@ -275,6 +278,8 @@ def main():
             master.instant_action('cancelOrder')
         elif args.command == 'factsheet':
             master.instant_action('factsheetRequest')
+        elif args.command == 'drive-mode':
+            master.instant_action('setDriveMode', [{'key': 'mode', 'value': args.mode}])
 
         watch(master, 0.0 if args.command == 'watch' else args.watch)
     except KeyboardInterrupt:

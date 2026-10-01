@@ -19,4 +19,7 @@
   <class type="rover_vda5050_adapter::plugins::DisableAuxOutput" base_class_type="adapter::VDAAction">
     <description>disableAuxOutput: switch aux outputs 1..6 (safety PLC DIO00..05) off.</description>
   </class>
+  <class type="rover_vda5050_adapter::plugins::SetDriveMode" base_class_type="adapter::VDAAction">
+    <description>setDriveMode: switch the rover to Manual or Automatic (rover_drive_mode set_drive_mode).</description>
+  </class>
 </library>

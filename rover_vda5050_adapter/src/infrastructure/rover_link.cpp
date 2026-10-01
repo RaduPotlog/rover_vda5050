@@ -24,6 +24,7 @@
 
 #include "rover_vda5050_adapter/domain/aux_outputs.hpp"
 #include "rover_vda5050_adapter/infrastructure/aux_output_client.hpp"
+#include "rover_vda5050_adapter/infrastructure/drive_mode_client.hpp"
 #include "rover_vda5050_adapter/infrastructure/mission_manager_client.hpp"
 
 namespace rover_vda5050_adapter::infrastructure
@@ -193,6 +194,7 @@ RoverLinkConfig RoverLinkConfig::fromParameters(rclcpp::Node & node)
     config.run_mission_service = name("rover.run_mission_service", "run_mission");
     config.mission_state_topic = name("rover.mission_state_topic", "mission_state");
     config.drive_mode_topic = name("rover.drive_mode_topic", "drive_mode");
+    config.drive_mode_service = name("rover.drive_mode_service", "set_drive_mode");
     config.battery_topic = name("rover.battery_topic", "rover_battery/battery_status");
     config.safety_status_topic =
         name("rover.safety_status_topic", "hardware_interface/safety_status");
@@ -294,6 +296,12 @@ RoverLink::RoverLink(rclcpp::Node & node)
             node_, config_.aux_output_service_prefix, domain::kAuxOutputCount,
             std::chrono::duration<double>(config_.service_availability_timeout),
             std::chrono::duration<double>(config_.aux_output_timeout)));
+
+    drive_mode_use_case_ = std::make_unique<application::DriveModeUseCase>(
+        std::make_shared<DriveModeClient>(
+            node_, config_.drive_mode_service,
+            std::chrono::duration<double>(config_.service_availability_timeout),
+            std::chrono::duration<double>(config_.service_response_timeout)));
 
     // QoS matches each publisher: the latched topics are transient-local depth 1.
     const auto latched = rclcpp::QoS(rclcpp::KeepLast(1)).reliable().transient_local();

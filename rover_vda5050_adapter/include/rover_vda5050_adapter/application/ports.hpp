@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#include "rover_vda5050_adapter/domain/rover_status.hpp"
 #include "rover_vda5050_adapter/domain/types.hpp"
 
 namespace rover_vda5050_adapter::application
@@ -77,6 +78,26 @@ public:
 
     /** @brief Switch one output; @p index is 0-based (0 = DIO00). */
     virtual CommandResult set(int index, bool enabled) = 0;
+};
+
+/**
+ * @brief Outbound port to rover_drive_mode's drive_mode_manager.
+ *
+ * Implemented by a set_drive_mode service client. Blocks until the manager answers or a timeout
+ * expires, so never call it from the thread that services the client's responses.
+ */
+class DriveModePort
+{
+public:
+    virtual ~DriveModePort() = default;
+
+    /**
+     * @brief Ask for @p mode (kManual or kAutomatic).
+     *
+     * Not ok when the manager refuses (its reason in @c message, e.g. no mission manager for
+     * Automatic) or does not answer.
+     */
+    virtual CommandResult set(domain::DriveMode mode) = 0;
 };
 
 }  // namespace rover_vda5050_adapter::application
