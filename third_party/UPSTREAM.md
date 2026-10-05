@@ -34,6 +34,8 @@ re-check each entry after a `git subtree pull`.
 | `vda5050_connector/vda5050_connector_py/mqtt_bridge.py` | `VDA5050_CONNECTOR_TLS` (`auto`/`true`/`false`) decides TLS; `auto` keeps upstream's "TLS when a user name is set" (+ `test/test_mqtt_bridge_tls.py`) | A broker reached through a VPN needs user/password without TLS |
 | `vda5050_connector/vda5050_connector_py/mqtt_bridge.py`, `vda5050_connector_py/vda5050_controller.py` | `logger.warn(` → `logger.warning(` (all call sites; mechanical, not marked) | `warn` is gone from the lyrical rclpy logger, so these paths crashed |
 | `vda5050_serializer/setup.cfg` | `script-dir`/`install-scripts` → `script_dir`/`install_scripts` | Dash-separated keys are rejected by current setuptools |
+| `vda5050_connector/package.xml` | Second `<license>Apache-2.0</license>` | The local test files (`test/test_mqtt_bridge_factsheet.py`, `_shutdown.py`, `_tls.py`) are Apache-2.0, not BSD |
+| `vda5050_msgs/LICENSE`, `vda5050_serializer/LICENSE` (new files) | Copies of `ros_amr_interop/LICENSE` (BSD) and of the Apache-2.0 text | Upstream ships no license text in these packages; `vda5050_serializer` declares Apache-2.0, unlike the rest of the repo |
 
 ### Updating
 

@@ -8,6 +8,8 @@
   <author email="alejandro.duarte@ekumenlabs.com">John Alejandro Duarte Carrasco</author>
   <author email="leandro@inorbit.ai">Leandro Pineda</author>
   <license file="LICENSE">BSD Clause 3</license>
+  <!-- rover_vda5050: the test files added by local patches (test/test_mqtt_bridge_*.py) are Apache-2.0 -->
+  <license>Apache-2.0</license>
 
   <member_of_group>rosidl_interface_packages</member_of_group>
 
