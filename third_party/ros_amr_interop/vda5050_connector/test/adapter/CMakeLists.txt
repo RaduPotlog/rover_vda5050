@@ -7,6 +7,7 @@ if (TARGET ${target})
   target_include_directories(${target} PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:common>)
+  # rover_vda5050 lyrical port: ament_target_dependencies() was removed in lyrical.
   target_link_libraries(${target} ${adapter_link_targets} ${library_adapter})
 endif()
 endmacro()
