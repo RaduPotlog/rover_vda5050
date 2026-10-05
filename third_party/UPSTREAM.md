@@ -12,7 +12,8 @@
 | Vendored as | `git subtree --squash` at `third_party/ros_amr_interop` |
 
 Packages built here: `vda5050_msgs`, `vda5050_serializer`, `vda5050_connector`.
-Not built (`COLCON_IGNORE`, left in place so `git subtree pull` stays clean):
+Not built (`COLCON_IGNORE`, plus `CATKIN_IGNORE` so `rosdep install --from-paths` skips them
+too; left in place so `git subtree pull` stays clean):
 `massrobotics_amr_sender_py`, `rmf_inorbit_fleet_adapter`.
 
 ### Local patches
