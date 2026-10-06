@@ -52,8 +52,8 @@
         # max_accel[0] / max_decel[0].
         speed_min: 0.0
         speed_max: 0.8
-        acceleration_max: 1.5
-        deceleration_max: 1.5
+        acceleration_max: 1.4
+        deceleration_max: 1.4
         # rover_nav_params.yaml, footprint comment: 0.913 x 0.803 m (measured 2026-09-27).
         length: 0.913
         width: 0.803
