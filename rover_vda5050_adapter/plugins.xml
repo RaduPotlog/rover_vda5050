@@ -22,4 +22,10 @@
   <class type="rover_vda5050_adapter::plugins::SetDriveMode" base_class_type="adapter::VDAAction">
     <description>setDriveMode: switch the rover to Manual or Automatic (rover_drive_mode set_drive_mode).</description>
   </class>
+  <class type="rover_vda5050_adapter::plugins::StartFollowing" base_class_type="adapter::VDAAction">
+    <description>startFollowing: start follow-me (rover_follow_me follow_me/start).</description>
+  </class>
+  <class type="rover_vda5050_adapter::plugins::StopFollowing" base_class_type="adapter::VDAAction">
+    <description>stopFollowing: stop follow-me (rover_follow_me follow_me/stop).</description>
+  </class>
 </library>

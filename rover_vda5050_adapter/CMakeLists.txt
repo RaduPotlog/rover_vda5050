@@ -33,6 +33,7 @@ add_library(${PROJECT_NAME}_core STATIC
     src/domain/rover_status.cpp
     src/application/aux_output_use_case.cpp
     src/application/drive_mode_use_case.cpp
+    src/application/follow_me_use_case.cpp
     src/application/navigation_use_case.cpp)
 target_include_directories(${PROJECT_NAME}_core PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -44,11 +45,13 @@ set_property(TARGET ${PROJECT_NAME}_core PROPERTY POSITION_INDEPENDENT_CODE ON)
 add_library(${PROJECT_NAME}_plugins SHARED
     src/infrastructure/aux_output_client.cpp
     src/infrastructure/drive_mode_client.cpp
+    src/infrastructure/follow_me_client.cpp
     src/infrastructure/mission_manager_client.cpp
     src/infrastructure/rover_link.cpp
     src/infrastructure/vda_conversions.cpp
     src/plugins/aux_output_actions.cpp
     src/plugins/drive_mode_action.cpp
+    src/plugins/follow_me_actions.cpp
     src/plugins/mission_nav_through_nodes.cpp
     src/plugins/pause_actions.cpp
     src/plugins/rover_state_handler.cpp)
@@ -102,6 +105,9 @@ if(BUILD_TESTING)
 
     ament_add_gtest(test_drive_mode_use_case test/unit/test_drive_mode_use_case.cpp)
     target_link_libraries(test_drive_mode_use_case ${PROJECT_NAME}_core)
+
+    ament_add_gtest(test_follow_me_use_case test/unit/test_follow_me_use_case.cpp)
+    target_link_libraries(test_follow_me_use_case ${PROJECT_NAME}_core)
 
     # Mechanically enforce that domain/ never grows a ROS dependency.
     add_test(

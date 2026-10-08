@@ -100,6 +100,25 @@ public:
     virtual CommandResult set(domain::DriveMode mode) = 0;
 };
 
+/**
+ * @brief Outbound port to rover_follow_me's follow_me node.
+ *
+ * Implemented by follow_me/start and follow_me/stop service clients (std_srvs/Trigger). Blocks
+ * until the node answers or a timeout expires, so never call it from the thread that services
+ * the client's responses.
+ */
+class FollowMePort
+{
+public:
+    virtual ~FollowMePort() = default;
+
+    /** @brief Start following. Not ok when follow_me refuses (its reason in @c message). */
+    virtual CommandResult start() = 0;
+
+    /** @brief Stop following. Not ok when there is nothing to stop or no answer. */
+    virtual CommandResult stop() = 0;
+};
+
 }  // namespace rover_vda5050_adapter::application
 
 #endif  // ROVER_VDA5050_ADAPTER_APPLICATION_PORTS_HPP_

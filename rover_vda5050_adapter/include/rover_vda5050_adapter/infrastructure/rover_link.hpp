@@ -34,6 +34,7 @@
 
 #include "rover_vda5050_adapter/application/aux_output_use_case.hpp"
 #include "rover_vda5050_adapter/application/drive_mode_use_case.hpp"
+#include "rover_vda5050_adapter/application/follow_me_use_case.hpp"
 #include "rover_vda5050_adapter/application/navigation_use_case.hpp"
 #include "rover_vda5050_adapter/application/ports.hpp"
 #include "rover_vda5050_adapter/domain/rover_status.hpp"
@@ -57,6 +58,8 @@ struct RoverLinkConfig
     std::string mission_state_topic;
     std::string drive_mode_topic;
     std::string drive_mode_service;
+    std::string follow_me_start_service;
+    std::string follow_me_stop_service;
     std::string battery_topic;
     std::string safety_status_topic;
     std::string motion_lock_topic;
@@ -129,6 +132,7 @@ public:
     application::NavigationUseCase & navigation() { return *navigation_; }
     application::AuxOutputUseCase & auxOutputs() { return *aux_outputs_; }
     application::DriveModeUseCase & driveMode() { return *drive_mode_use_case_; }
+    application::FollowMeUseCase & followMe() { return *follow_me_use_case_; }
     const RoverLinkConfig & config() const { return config_; }
 
     /** @brief Current state. Non-blocking; safe on the executor thread. */
@@ -148,6 +152,7 @@ private:
     std::unique_ptr<application::NavigationUseCase> navigation_;
     std::unique_ptr<application::AuxOutputUseCase> aux_outputs_;
     std::unique_ptr<application::DriveModeUseCase> drive_mode_use_case_;
+    std::unique_ptr<application::FollowMeUseCase> follow_me_use_case_;
 
     mutable std::mutex mutex_;
     std::optional<rover_msgs::msg::DriveMode> drive_mode_;

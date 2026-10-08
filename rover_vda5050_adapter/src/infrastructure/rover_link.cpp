@@ -25,6 +25,7 @@
 #include "rover_vda5050_adapter/domain/aux_outputs.hpp"
 #include "rover_vda5050_adapter/infrastructure/aux_output_client.hpp"
 #include "rover_vda5050_adapter/infrastructure/drive_mode_client.hpp"
+#include "rover_vda5050_adapter/infrastructure/follow_me_client.hpp"
 #include "rover_vda5050_adapter/infrastructure/mission_manager_client.hpp"
 
 namespace rover_vda5050_adapter::infrastructure
@@ -195,6 +196,8 @@ RoverLinkConfig RoverLinkConfig::fromParameters(rclcpp::Node & node)
     config.mission_state_topic = name("rover.mission_state_topic", "mission_state");
     config.drive_mode_topic = name("rover.drive_mode_topic", "drive_mode");
     config.drive_mode_service = name("rover.drive_mode_service", "set_drive_mode");
+    config.follow_me_start_service = name("rover.follow_me_start_service", "follow_me/start");
+    config.follow_me_stop_service = name("rover.follow_me_stop_service", "follow_me/stop");
     config.battery_topic = name("rover.battery_topic", "rover_battery/battery_status");
     config.safety_status_topic =
         name("rover.safety_status_topic", "hardware_interface/safety_status");
@@ -300,6 +303,12 @@ RoverLink::RoverLink(rclcpp::Node & node)
     drive_mode_use_case_ = std::make_unique<application::DriveModeUseCase>(
         std::make_shared<DriveModeClient>(
             node_, config_.drive_mode_service,
+            std::chrono::duration<double>(config_.service_availability_timeout),
+            std::chrono::duration<double>(config_.service_response_timeout)));
+
+    follow_me_use_case_ = std::make_unique<application::FollowMeUseCase>(
+        std::make_shared<FollowMeClient>(
+            node_, config_.follow_me_start_service, config_.follow_me_stop_service,
             std::chrono::duration<double>(config_.service_availability_timeout),
             std::chrono::duration<double>(config_.service_response_timeout)));
 

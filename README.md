@@ -54,6 +54,7 @@ behind the manager's back.
 | `startPause` / `stopPause` | `run_mission false` and keep the route / `set_mission` with the nodes not yet reached (the manager has no pause) |
 | `enableAuxOutput` / `disableAuxOutput` (instant, node) | `hardware_interface/aux_output_<n-1>/set` for each output named by `outputs` (see below) |
 | `setDriveMode` (custom, instant) | `set_drive_mode` (`rover_msgs/SetDriveMode`) with `mode` `MANUAL` or `AUTOMATIC` (see below) |
+| `startFollowing` / `stopFollowing` (custom, instant) | `follow_me/start` / `follow_me/stop` (`std_srvs/Trigger`, [rover_follow_me](https://github.com/RaduPotlog/rover_follow_me)) (see below) |
 | `stateRequest`, `factsheetRequest` | Answered by the upstream controller. The factsheet is published retained on `…/factsheet`, and its `agvActions` lists every action here |
 | `operatingMode` | Drive mode AUTOMATIC → `AUTOMATIC`; ASSISTED and MANUAL → `MANUAL` (an operator drives; `SEMIAUTOMATIC` would mean master control's orders run); no drive-mode manager → `SERVICE` |
 | `paused` | `startPause`, or the mission manager holding the mission (motion lock, dead lidar) |
@@ -120,6 +121,32 @@ Open-RMF's dashboard uses it (rover_rmf, Rover card).
 - **Not a safety function:** neither are the drive modes (rover_ros `rover_arch/SAFETY_CHAIN.md`).
   The e-stop, the safety PLC and the lidar monitor are unaffected.
 - **Service:** `rover.drive_mode_service` (default `set_drive_mode`).
+
+### Follow-me
+
+`startFollowing` and `stopFollowing` let master control start and stop follow-me
+([rover_follow_me](https://github.com/RaduPotlog/rover_follow_me)). They are custom instant actions
+without parameters:
+
+```json
+{"actionType": "startFollowing", "actionId": "…", "blockingType": "HARD", "actionParameters": []}
+```
+
+- **What they do:** they call `follow_me/start` / `follow_me/stop` (`std_srvs/Trigger`), exactly as
+  the drive UI's *Follow me* card does. Fleet control decides *that* the rover follows; the rover
+  follows on its own, through Nav 2's Following server, outside any order.
+- **Success:** `FINISHED` as soon as following has started (`Following started.`) or stopped.
+  Following itself does not show in the order or in `actionStates` after that.
+- **Refused:** `FAILED`, and the controller publishes the reason once as an `actionFailed` error
+  (`errorDescription` e.g. `startFollowing refused: drive mode is ASSISTED; switch the rover to
+  Automatic`); the upstream controller keeps `resultDescription` for FINISHED only. Reasons: the
+  rover is not in Automatic, an order is running, nobody stands in front of the rover, or the
+  services are unavailable (follow-me not running) or don't answer in time.
+- **An order wins:** an order sent while the rover follows starts a mission, and follow_me stops
+  following on its own; send `stopFollowing` first to make it explicit.
+- **Services:** `rover.follow_me_start_service` / `rover.follow_me_stop_service` (defaults
+  `follow_me/start`, `follow_me/stop`).
+- **Try it:** `fake_master.py follow start` / `fake_master.py follow stop`.
 
 ### Decisions worth knowing
 

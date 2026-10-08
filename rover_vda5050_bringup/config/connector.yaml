@@ -73,7 +73,8 @@
 
     # cancelOrder, stateRequest and factsheetRequest are handled by the controller itself.
     vda_action_handlers:
-      ["startPause", "stopPause", "enableAuxOutput", "disableAuxOutput", "setDriveMode"]
+      ["startPause", "stopPause", "enableAuxOutput", "disableAuxOutput", "setDriveMode",
+       "startFollowing", "stopFollowing"]
     start_pause:
       handler: "rover_vda5050_adapter::plugins::StartPause"
       description: "Stop driving and keep the order; stopPause continues it."
@@ -138,6 +139,28 @@
         description: "MANUAL or AUTOMATIC. Assisted is chosen on the rover's drive UI only."
         is_optional: false
 
+    # Custom: follow-me (rover_follow_me's follow_me/start and follow_me/stop). Fleet control
+    # decides that the rover follows; the rover follows on its own (Nav 2's Following server), so
+    # the action finishes once following has started or stopped. follow_me refuses a start outside
+    # Automatic, during an order or with nobody in front of the rover; an order sent while it
+    # follows stops following.
+    start_following:
+      handler: "rover_vda5050_adapter::plugins::StartFollowing"
+      description: "Follow the person standing about 1.5 m in front of the rover (follow-me)."
+      result_description: "Following started, or why follow-me refused."
+      scopes:
+        instant: true
+        node: false
+        edge: false
+    stop_following:
+      handler: "rover_vda5050_adapter::plugins::StopFollowing"
+      description: "Stop following (follow-me)."
+      result_description: "Following stopped, or why not."
+      scopes:
+        instant: true
+        node: false
+        edge: false
+
     # rover_vda5050_adapter: how the orders reach the rover. Relative names resolve against
     # rover.namespace (not the connector's own <namespace>/vda5050); frames get the rover's
     # <namespace>/ tf prefix unless they already name one.
@@ -161,6 +184,9 @@
       drive_mode_topic: "drive_mode"
       # setDriveMode calls it (rover_msgs/SetDriveMode); service_*_timeout apply.
       drive_mode_service: "set_drive_mode"
+      # startFollowing / stopFollowing call these (std_srvs/Trigger, rover_follow_me).
+      follow_me_start_service: "follow_me/start"
+      follow_me_stop_service: "follow_me/stop"
       battery_topic: "rover_battery/battery_status"
       safety_status_topic: "hardware_interface/safety_status"
       motion_lock_topic: "motion_lock"
