@@ -47,7 +47,10 @@ CommandResult FollowMeClient::call(rclcpp::Client<std_srvs::srv::Trigger> & clie
     const std::string service = client.get_service_name();
 
     if (!client.wait_for_service(availability_timeout_)) {
-        return {false, "'" + service + "' unavailable (is rover-a1-follow-me running?).", false};
+        return {false,
+                "'" + service +
+                    "' unavailable (is follow-me running on the orchestrator? ROVER_START_FOLLOW_ME).",
+                false};
     }
 
     auto future = client.async_send_request(std::make_shared<std_srvs::srv::Trigger::Request>());

@@ -54,7 +54,7 @@ behind the manager's back.
 | `startPause` / `stopPause` | `run_mission false` and keep the route / `set_mission` with the nodes not yet reached (the manager has no pause) |
 | `enableAuxOutput` / `disableAuxOutput` (instant, node) | `hardware_interface/aux_output_<n-1>/set` for each output named by `outputs` (see below) |
 | `setDriveMode` (custom, instant) | `set_drive_mode` (`rover_msgs/SetDriveMode`) with `mode` `MANUAL` or `AUTOMATIC` (see below) |
-| `startFollowing` / `stopFollowing` (custom, instant) | `follow_me/start` / `follow_me/stop` (`std_srvs/Trigger`, [rover_follow_me](https://github.com/RaduPotlog/rover_follow_me)) (see below) |
+| `startFollowing` / `stopFollowing` (custom, instant) | `follow_me/start` / `follow_me/stop` (`std_srvs/Trigger`, [rover_follow_me](https://github.com/RaduPotlog/rover_orchestrator/tree/master/rover_follow_me), in `rover_orchestrator`) (see below) |
 | `stateRequest`, `factsheetRequest` | Answered by the upstream controller. The factsheet is published retained on `…/factsheet`, and its `agvActions` lists every action here |
 | `operatingMode` | Drive mode AUTOMATIC → `AUTOMATIC`; ASSISTED and MANUAL → `MANUAL` (an operator drives; `SEMIAUTOMATIC` would mean master control's orders run); no drive-mode manager → `SERVICE` |
 | `paused` | `startPause`, or the mission manager holding the mission (motion lock, dead lidar) |
@@ -125,7 +125,7 @@ Open-RMF's dashboard uses it (rover_rmf, Rover card).
 ### Follow-me
 
 `startFollowing` and `stopFollowing` let master control start and stop follow-me
-([rover_follow_me](https://github.com/RaduPotlog/rover_follow_me)). They are custom instant actions
+([rover_follow_me](https://github.com/RaduPotlog/rover_orchestrator/tree/master/rover_follow_me), in `rover_orchestrator`). They are custom instant actions
 without parameters:
 
 ```json
