@@ -198,7 +198,7 @@ RoverLinkConfig RoverLinkConfig::fromParameters(rclcpp::Node & node)
     config.drive_mode_service = name("rover.drive_mode_service", "set_drive_mode");
     config.follow_me_start_service = name("rover.follow_me_start_service", "follow_me/start");
     config.follow_me_stop_service = name("rover.follow_me_stop_service", "follow_me/stop");
-    config.battery_topic = name("rover.battery_topic", "rover_battery/battery_status");
+    config.battery_topic = name("rover.battery_topic", "battery/battery_status");
     config.safety_status_topic =
         name("rover.safety_status_topic", "hardware_interface/safety_status");
     config.motion_lock_topic = name("rover.motion_lock_topic", "motion_lock");

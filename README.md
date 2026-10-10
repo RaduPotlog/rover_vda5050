@@ -60,7 +60,7 @@ behind the manager's back.
 | `paused` | `startPause`, or the mission manager holding the mission (motion lock, dead lidar) |
 | `agvPosition` | TF `<ns>/<map_frame>` → `<ns>/base_link`; `positionInitialized` false when missing or older than 2 s. `mapId` = the indoor map in use, else `rover.map_id` |
 | `velocity` | `odom` twist |
-| `batteryState` | `rover_battery/battery_status` (charge 0 when the BMS does not know) |
+| `batteryState` | `battery/battery_status` (charge 0 when the BMS does not know) |
 | `safetyState.eStop` | `MANUAL` while the e-stop button is pressed or the safety PLC latch is set, else `NONE` |
 | `safetyState.fieldViolation` | The drive mode's collision monitor is in its stop zone |
 | `errors` (all `WARNING`) | `missionRefused` (why the manager refused the last order), `motionLocked`, `localizationUnavailable`, `safetyLinkDown` |

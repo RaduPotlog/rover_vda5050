@@ -187,7 +187,7 @@
       # startFollowing / stopFollowing call these (std_srvs/Trigger, rover_follow_me).
       follow_me_start_service: "follow_me/start"
       follow_me_stop_service: "follow_me/stop"
-      battery_topic: "rover_battery/battery_status"
+      battery_topic: "battery/battery_status"
       safety_status_topic: "hardware_interface/safety_status"
       motion_lock_topic: "motion_lock"
       localization_state_topic: "localization_state"
