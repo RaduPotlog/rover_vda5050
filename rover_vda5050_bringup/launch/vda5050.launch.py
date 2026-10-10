@@ -99,7 +99,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         DeclareLaunchArgument(
-            'namespace', default_value=os.environ.get('ROVER_NAMESPACE', 'rover'),
+            'namespace', default_value=os.environ.get('ROVER_SYSTEM_NAMESPACE', 'rover'),
             description='Rover namespace; the connector runs under <namespace>/vda5050.'),
         DeclareLaunchArgument(
             'broker_host', default_value='127.0.0.1', description='MQTT broker host.'),

@@ -49,7 +49,8 @@ CommandResult FollowMeClient::call(rclcpp::Client<std_srvs::srv::Trigger> & clie
     if (!client.wait_for_service(availability_timeout_)) {
         return {false,
                 "'" + service +
-                    "' unavailable (is follow-me running on the orchestrator? ROVER_START_FOLLOW_ME).",
+                    "' unavailable (is follow-me running on the orchestrator? "
+                    "ROVER_SYSTEM_FOLLOW_ME_ENABLE).",
                 false};
     }
 

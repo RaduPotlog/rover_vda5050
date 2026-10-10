@@ -172,7 +172,7 @@ without parameters:
 
 ## Running
 
-In the container, `ROVER_START_VDA5050=true` is all it takes (see rover_docker's README, "VDA
+In the container, `ROVER_VDA5050_ENABLE=true` is all it takes (see rover_docker's README, "VDA
 5050"). Outside it:
 
 ```bash
